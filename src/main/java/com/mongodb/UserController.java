@@ -1,11 +1,16 @@
 package com.mongodb;
 
+import com.mongodb.client.FindIterable;
 import com.mongodb.entity.User;
 import com.mongodb.util.CookieUtils;
+import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.BasicUpdate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,6 +23,10 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 
 /**
@@ -50,7 +59,7 @@ public class UserController {
         return "/login";
     }
     @RequestMapping(value = {"userLogin"})
-    public String userLogin(Model model, HttpServletRequest request, HttpServletResponse response) throws UnsupportedEncodingException {
+    public void userLogin(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
         //设置字符集
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
@@ -94,8 +103,8 @@ public class UserController {
             Criteria criteria = new Criteria();
             criteria.and("username").is(username);
             criteria.and("password").is(CookieUtils.md5Encrypt(password));
-            System.out.println(username);
-            System.out.println(CookieUtils.md5Encrypt(password));
+//            System.out.println(username);
+//            System.out.println(CookieUtils.md5Encrypt(password));
             Query query = new Query(criteria);
             User user = mongoTemplate.findOne(query, User.class);
 
@@ -106,24 +115,24 @@ public class UserController {
                 System.out.println(user);
                 CookieUtils.createCookie(username,request,response,7*24*60*60); //选择类记住我一周
                 request.getSession().setAttribute("user",user.getUsername());
-                return "/index";
+//                moreUser(request,response);
+                response.sendRedirect("/index");
             }else{
                 System.out.println(user);
                 request.setAttribute("errorMsg", "用户名或者密码错误");
-                System.out.println("2222");
-                String err = (String) request.getAttribute("errorMsg");
-                System.out.println(err);
-                return "/login";
+//                response.sendRedirect("/login");
+                request.getRequestDispatcher("/login").forward(request, response);
             }
 
         }else {
+            moreUser(request,response);
             request.getSession().setAttribute("user",username);
-            return "/index";
+            response.sendRedirect("/index");
         }
     }
     // 注销
     @RequestMapping(value = {"logout"})
-    public String logout(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    public void logout(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         //把记录登录状态的cookie删除
         Cookie[] cookies=request.getCookies();
         if(cookies!=null && cookies.length>0) {
@@ -143,22 +152,85 @@ public class UserController {
         if(session!=null) {
             session.removeAttribute("user");
         }
-        return "/login";
+//        return "/login";
+        response.sendRedirect("/index");
     }
 
-    // 显示所有用户
-//    @RequestMapping(value = {"moreUser"})
-//    public String moreUser(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    // 好友列表
+    @RequestMapping(value = {"friendsList"})
+    public String friendsList(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+//        myFriends(request,response);
+        return "/friendsList";
+    }
+    // 显示我的好友
+//    @RequestMapping(value = {"myFriends"})
+//    public void myFriends(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException{
+//        String username = (String) request.getSession().getAttribute("user");
+//        Query query = new Query(Criteria.where("username").is(username));
+//        query.fields().include("friends");
+//        List<String> ids = mongoTemplate.findOne(query,User.class);
+//        System.out.println(user);
 //
+//        List<User> mylist = new ArrayList<User>();
+//
+//
+//        for (String id : ids) {
+//            System.out.println(id);
+//            Query query1 = new Query(Criteria.where("_id").is(id));
+//            User user1 = mongoTemplate.findOne(query1,User.class);
+//            System.out.println(user1);
+//        }
+//
+//
+//        request.setAttribute("mylist",mylist);
+////        request.getRequestDispatcher("/friendsList").forward(request, response);
 //    }
 
-//    @RequestMapping(value = {"addFriend"})
-//    public String addFriend(Model model, @RequestParam id){
-//        User user = new User();
-//        user.setNickname(nickname);
-//        user.setPassword(MD5Util.encrypt(password));
-//        user.setUsername(username);
-//        mongoTemplate.save(user);
-//        return "/login";
-//    }
+    // 添加好友
+    @RequestMapping(value = {"addFriend"})
+    public void add(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String id = request.getParameter("id");
+        System.out.println(id);
+        String username = (String) request.getSession().getAttribute("user");
+        Query query = new Query(Criteria.where("username").is(username));
+
+        Update update = new Update().push("friends", id);
+
+        mongoTemplate.updateFirst(query, update, User.class);
+
+        request.getRequestDispatcher("/moreFriends").forward(request, response);
+
+    }
+    // 删除好友
+    @RequestMapping(value = {"removeFriend"})
+    public void remove(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String id = request.getParameter("id");
+        System.out.println(id);
+        String username = (String) request.getSession().getAttribute("user");
+        Query query = new Query(Criteria.where("username").is(username));
+
+        Update update = new Update().push("friends", id);
+
+        mongoTemplate.updateFirst(query, update, User.class);
+
+        request.getRequestDispatcher("/moreFriends").forward(request, response);
+
+    }
+
+    // 所有用户
+    @RequestMapping(value = {"moreFriends"})
+    public String moreFriends(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        moreUser(request,response);
+        return "/moreFriends";
+    }
+
+//    @RequestMapping(value = {"moreUser"})
+    public void moreUser(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        List<User> list = new ArrayList<User>();
+        list = mongoTemplate.findAll(User.class);
+        request.setAttribute("userList",list);
+//        response.sendRedirect("/index");
+    }
+
+
 }

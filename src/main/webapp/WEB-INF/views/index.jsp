@@ -19,24 +19,24 @@
 <body>
     <div class="container">
         <ul class="nav nav-tabs">
-            <li role="presentation" class="active"><a href="#home" data-toggle="tab">个人中心</a></li>
-            <li role="presentation"><a href="#friends" data-toggle="tab">好友列表</a></li>
-            <li role="presentation"><a href="#infos" data-toggle="tab">朋友圈</a></li>
-            <li role="presentation"><a href="#more_friends" data-toggle="tab">更多好友</a></li>
-            <li class="navbar-text navbar-right">
+            <li role="presentation" class="active"><a href="/index" >个人中心</a></li>
+            <li role="presentation"><a href="/friendsList">好友列表</a></li>
+            <li role="presentation"><a href="#" >朋友圈</a></li>
+            <li role="presentation" ><a href="/moreFriends" >更多好友</a></li>
+            <li role="presentation" class="navbar-text navbar-right">
                 <c:choose>
                     <c:when test="${empty sessionScope.user }"><a href="/login">未登录</a></c:when>
-                    <c:otherwise>欢迎！${sessionScope.user}<a href="/logout"> 注销</a></c:otherwise>
+                    <c:otherwise>欢迎！${sessionScope.user}<a href="logout"> 注销</a></c:otherwise>
                 </c:choose>
             </li>
         </ul>
         <div id="container" class="tab-content">
-            <div class="tab-pane active" id="home">个人中心</div>
-            <div class="tab-pane fade" id="friends">好友列表</div>
-            <div class="tab-pane fade" id="infos">朋友圈</div>
-            <div class="tab-pane fade" id="more_friends">朋友圈</div>
+            个人中心
         </div>
     </div>
 
+    <script>
+
+    </script>
 </body>
 </html>

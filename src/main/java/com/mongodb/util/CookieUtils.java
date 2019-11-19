@@ -8,7 +8,6 @@ import java.security.MessageDigest;
 
 public class CookieUtils {
 	private static final String KEY = ":cookie@ybzy.com123!";
-
 	/**
 	 * 指令浏览器创建cookie文件用的方法
 	 * @param username : 放到cookie信息你 用户名
@@ -52,7 +51,6 @@ public class CookieUtils {
 		}catch (Exception e) {
 			e.printStackTrace();
 		}
-
 		return null;
 	}
 
