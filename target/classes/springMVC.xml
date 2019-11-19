@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context" xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+      http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+      http://www.springframework.org/schema/context
+      http://www.springframework.org/schema/context/spring-context-3.1.xsd
+      http://www.springframework.org/schema/mvc
+      http://www.springframework.org/schema/mvc/spring-mvc-3.0.xsd">
+
+    <!-- 支持注解 -->
+    <mvc:annotation-driven />
+
+    <!--自动装配DefaultAnnotationHandlerMapping和AnnotationMethodHandlerAdapter -->
+    <mvc:default-servlet-handler />
+
+    <!-- 设置自动扫描的路径,用于自动注入bean   这里的路径与自己的项目目录对应-->
+    <!-- 扫描controller路由控制器  -->
+    <context:component-scan base-package="com.mongodb" />
+
+    <!-- 设置静态资源可访问 -->
+    <!--<mvc:resources location="/" mapping="/**"/>-->
+    <mvc:resources location="/bootstrap-3.3.7-dist/" mapping="/bootstrap3.3.5/**"/>
+
+    <!-- 视图解析器 -->
+    <bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="viewClass" value="org.springframework.web.servlet.view.JstlView" />
+        <property name="suffix" value=".jsp" />  <!-- 视图文件类型 -->
+        <property name="prefix" value="/WEB-INF/views/" /> <!-- 视图文件的文件夹路径 -->
+    </bean>
+</beans>
