@@ -25,14 +25,41 @@
         <li role="presentation"><a href="/moreFriends" >更多好友</a></li>
         <li role="presentation" class="navbar-text navbar-right">
             <c:choose>
-                <c:when test="${empty sessionScope.user }"><a href="/login">未登录</a></c:when>
+                <c:when test="${empty sessionScope.user }">
+                    <a href="/login">未登录</a>
+                    <a href="/register">注册</a>
+                </c:when>
                 <c:otherwise>欢迎！${sessionScope.user}<a href="logout"> 注销</a></c:otherwise>
             </c:choose>
         </li>
     </ul>
     <div id="container">
 
+        <table  style="margin:100px;border:1px solid black;" border="1" cellpadding="0" cellspacing="0">
+            <tr>
+                <td>用户id</td>
+                <td>用户名称</td>
+                <td>用户密码</td>
+                <td>用户昵称</td>
+            </tr>
 
+            <c:if test="${not emptymylist}">
+                <c:forEach items="${mylist}" var="user">
+                    <tr>
+                        <td>${user.id }</td>
+                        <td>${user.username }</td>
+                        <td>${user.password }</td>
+                        <td>${user.nickname }</td>
+                        <td>
+                            <form action="/removeFriend">
+                                <input name="id" value="${user.id}">
+                                <input type="submit" value="删除"></input>
+                            </form>
+                        </td>
+                    </tr>
+                </c:forEach>
+            </c:if>
+        </table>
 
     </div>
 </div>

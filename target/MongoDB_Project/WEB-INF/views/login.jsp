@@ -89,6 +89,9 @@
         <input type="password" name="password" class="form-control" placeholder="Password" required>
         <button class="btn btn-lg btn-primary btn-block" type="submit" id="submitbtn">登录</button>
     </form>
+    <p style="text-align: center;">
+        <a href="/register">先去注册！</a>
+    </p>
 </div> <!-- /container -->
 </body>
 </html>

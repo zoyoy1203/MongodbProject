@@ -5,9 +5,7 @@ import com.mongodb.entity.User;
 import com.mongodb.util.CookieUtils;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.BasicUpdate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
@@ -22,10 +20,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 
@@ -36,6 +31,27 @@ import java.util.List;
 public class UserController {
     @Autowired
     MongoTemplate mongoTemplate;
+
+    private User getMine(HttpServletRequest request, HttpServletResponse response){
+        String username = (String) request.getSession().getAttribute("user");
+        Query query = new Query(Criteria.where("username").is(username));
+        User user = mongoTemplate.findOne(query,User.class);
+        return user;
+    }
+
+    // 个人中心
+    @RequestMapping(value = {"","/","/index"})
+    public String index(HttpServletRequest request, HttpServletResponse response) {
+        String username = (String) request.getSession().getAttribute("user");
+        if(username != null){
+            User user = getMine(request,response);
+            request.setAttribute("myInfo", user);
+            return "/index";
+        }else{
+            request.setAttribute("errorMsg", "请先登录！");
+            return "/login";
+        }
+    }
 
     // 注册
     @RequestMapping(value = {"register"})
@@ -159,44 +175,82 @@ public class UserController {
     // 好友列表
     @RequestMapping(value = {"friendsList"})
     public String friendsList(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-//        myFriends(request,response);
-        return "/friendsList";
+        String username = (String) request.getSession().getAttribute("user");
+        if(username != null){
+            myFriends(request,response);
+            return "/friendsList";
+        }else{
+            request.setAttribute("errorMsg", "请先登录！");
+            return "/login";
+        }
+
     }
     // 显示我的好友
 //    @RequestMapping(value = {"myFriends"})
-//    public void myFriends(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException{
+    public void myFriends(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException{
 //        String username = (String) request.getSession().getAttribute("user");
 //        Query query = new Query(Criteria.where("username").is(username));
-//        query.fields().include("friends");
-//        List<String> ids = mongoTemplate.findOne(query,User.class);
-//        System.out.println(user);
-//
-//        List<User> mylist = new ArrayList<User>();
-//
-//
-//        for (String id : ids) {
-//            System.out.println(id);
-//            Query query1 = new Query(Criteria.where("_id").is(id));
-//            User user1 = mongoTemplate.findOne(query1,User.class);
-//            System.out.println(user1);
-//        }
-//
-//
-//        request.setAttribute("mylist",mylist);
-////        request.getRequestDispatcher("/friendsList").forward(request, response);
-//    }
+//        User user = mongoTemplate.findOne(query,User.class);
+        User user = getMine(request,response);
+
+        System.out.println("当前用户：");
+        System.out.println(user);
+        List<String> ids = user.getFriends();
+        System.out.println("我的好友id列表：");
+        System.out.println(ids);
+
+        List<User> mylist = new ArrayList<User>();
+        if(ids != null){
+            for(String id : ids){
+                Query query1 = new Query(Criteria.where("_id").is(id));
+                User user1 = mongoTemplate.findOne(query1,User.class);
+                mylist.add(user1);
+            }
+        }
+        System.out.println("好友列表：");
+        System.out.println(mylist);
+        request.setAttribute("mylist",mylist);
+//        request.getRequestDispatcher("/friendsList").forward(request, response);
+    }
 
     // 添加好友
     @RequestMapping(value = {"addFriend"})
     public void add(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String id = request.getParameter("id");
+        User user = getMine(request,response);
+        List<String> ids = user.getFriends();
+
+        System.out.println("添加id：");
         System.out.println(id);
-        String username = (String) request.getSession().getAttribute("user");
-        Query query = new Query(Criteria.where("username").is(username));
-
-        Update update = new Update().push("friends", id);
-
-        mongoTemplate.updateFirst(query, update, User.class);
+        System.out.println(ids);
+        System.out.println("----------");
+        if( ids != null && ids.size() != 0 ){
+            Boolean flag = true;
+            System.out.println("ids!=null / 0");
+            for(String i : ids){
+                System.out.println("i=============");
+                System.out.println(i);
+                if(i.equals(id)){
+                    System.out.println("已添加过");
+                    request.setAttribute("info", "已添加过");
+                    flag = false;
+                    break;
+                }
+            }
+            if(flag){
+                String username = (String) request.getSession().getAttribute("user");
+                Query query = new Query(Criteria.where("username").is(username));
+                Update update = new Update().push("friends", id);
+                mongoTemplate.updateFirst(query, update, User.class);
+            }
+        }else{
+            System.out.println("ids==null");
+            System.out.println("为null 执行");
+            String username = (String) request.getSession().getAttribute("user");
+            Query query = new Query(Criteria.where("username").is(username));
+            Update update = new Update().push("friends", id);
+            mongoTemplate.updateFirst(query, update, User.class);
+        }
 
         request.getRequestDispatcher("/moreFriends").forward(request, response);
 
@@ -205,15 +259,16 @@ public class UserController {
     @RequestMapping(value = {"removeFriend"})
     public void remove(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String id = request.getParameter("id");
+        System.out.println("删除id:");
         System.out.println(id);
         String username = (String) request.getSession().getAttribute("user");
         Query query = new Query(Criteria.where("username").is(username));
 
-        Update update = new Update().push("friends", id);
+        Update update = new Update().pull("friends", id);
 
         mongoTemplate.updateFirst(query, update, User.class);
 
-        request.getRequestDispatcher("/moreFriends").forward(request, response);
+        request.getRequestDispatcher("/friendsList").forward(request, response);
 
     }
 

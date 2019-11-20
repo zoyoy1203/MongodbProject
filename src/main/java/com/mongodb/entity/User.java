@@ -1,11 +1,13 @@
 package com.mongodb.entity;
 
+import java.util.List;
+
 public class User {
     private String id;
     private String username;
     private String password;
     private String nickname;
-    private String friends;
+    private List<String> friends;
 
     public String getId() {
         return id;
@@ -39,11 +41,11 @@ public class User {
         this.nickname = nickname;
     }
 
-    public String getFriends() {
+    public List<String> getFriends() {
         return friends;
     }
 
-    public void setFriends(String friends) {
+    public void setFriends(List<String> friends) {
         this.friends = friends;
     }
 
@@ -54,6 +56,7 @@ public class User {
                 ", username='" + username + '\'' +
                 ", password='" + password + '\'' +
                 ", nickname='" + nickname + '\'' +
+                ", friends=" + friends +
                 '}';
     }
 }
