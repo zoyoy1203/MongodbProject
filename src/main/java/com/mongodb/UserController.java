@@ -2,7 +2,10 @@ package com.mongodb;
 
 import com.mongodb.client.FindIterable;
 import com.mongodb.entity.User;
+import com.mongodb.gridfs.GridFS;
+import com.mongodb.gridfs.GridFSInputFile;
 import com.mongodb.util.CookieUtils;
+import com.sun.org.apache.xml.internal.resolver.helpers.FileURL;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -13,20 +16,19 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import javax.swing.plaf.synth.SynthOptionPaneUI;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-
-/**
- * Created by Administrator on 2019/11/15.
- */
 @Controller
 public class UserController {
     @Autowired
@@ -46,6 +48,7 @@ public class UserController {
         if(username != null){
             User user = getMine(request,response);
             request.setAttribute("myInfo", user);
+            request.setAttribute("avatar",user.getAvatar());
             return "/index";
         }else{
             request.setAttribute("errorMsg", "请先登录！");
@@ -65,6 +68,7 @@ public class UserController {
         user.setNickname(nickname);
         user.setPassword(CookieUtils.md5Encrypt(password));
         user.setUsername(username);
+        user.setMotto("该用户比较懒哦~");
         mongoTemplate.save(user);
         return "/login";
     }
@@ -143,6 +147,7 @@ public class UserController {
         }else {
             moreUser(request,response);
             request.getSession().setAttribute("user",username);
+            User user = getMine(request,response);
             response.sendRedirect("/index");
         }
     }
@@ -226,7 +231,7 @@ public class UserController {
         System.out.println("----------");
         if( ids != null && ids.size() != 0 ){
             Boolean flag = true;
-            System.out.println("ids!=null / 0");
+
             for(String i : ids){
                 System.out.println("i=============");
                 System.out.println(i);
@@ -288,4 +293,68 @@ public class UserController {
     }
 
 
+    // 存储用户头像
+    @RequestMapping(value = {"saveAvatar"})
+    public void savaAvatar(@RequestParam("muavatar") MultipartFile[] files, HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+
+            List<String> list = new ArrayList<String>();
+            if (files != null && files.length > 0) {
+                for (int i = 0; i < files.length; i++) {
+                    MultipartFile file = files[i];
+                    // 保存文件
+                    list = saveFile(request, file, list);
+
+                    String username = (String) request.getSession().getAttribute("user");
+                    Query query = new Query(Criteria.where("username").is(username));
+                    Update update = new Update().set("avatar", list.get(i));
+                    mongoTemplate.upsert(query, update, User.class);
+                }
+            }
+            //写着测试，删了就可以
+            for (int i = 0; i < list.size(); i++) {
+                System.out.println("集合里面的数据" + list.get(i));
+            }
+
+        request.getRequestDispatcher("/index").forward(request, response);
+
+    }
+
+
+    private List<String> saveFile(HttpServletRequest request, MultipartFile file, List<String> list) {
+        // 判断文件是否为空
+        if (!file.isEmpty()) {
+            try {
+                // 保存的文件路径(如果用的是Tomcat服务器，文件会上传到\\%TOMCAT_HOME%\\webapps\\YourWebProject\\upload\\文件夹中
+                // )
+                String filePath = request.getSession().getServletContext()
+                        .getRealPath("/")
+                        + "upload/" + file.getOriginalFilename();
+                System.out.println(filePath);
+
+                list.add(file.getOriginalFilename());
+                File saveDir = new File(filePath);
+                if (!saveDir.getParentFile().exists())
+                    saveDir.getParentFile().mkdirs();
+
+                // 转存文件
+                file.transferTo(saveDir);
+                return list;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return list;
+    }
+
+    // 修改座右铭
+    @RequestMapping(value = {"updateMotto"})
+    private void updateMotto(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String motto = request.getParameter("motto");
+        System.out.println(motto);
+        String username = (String) request.getSession().getAttribute("user");
+        Query query = new Query(Criteria.where("username").is(username));
+        Update update = new Update().set("motto",motto);
+        mongoTemplate.upsert(query, update, User.class);
+        request.getRequestDispatcher("/index").forward(request, response);
+    }
 }

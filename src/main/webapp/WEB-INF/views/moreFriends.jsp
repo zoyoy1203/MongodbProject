@@ -15,6 +15,27 @@
     <script src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
     <link href="<%=basePath%>/bootstrap-3.3.7-dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="<%=basePath%>/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
+    <style>
+        .users{
+            list-style: none;
+        }
+        .user{
+            display: inline-block;
+            width: 100%;
+            height: 70px;
+            line-height: 70px;
+            margin-top: 20px;
+        }
+        .avatar{
+            width: 50px;
+            height: 50px;
+        }
+        .user span{
+            display: inline-block;
+            min-width: 100px;
+            margin-left: 30px;
+        }
+    </style>
 </head>
 <body>
 <div class="container">
@@ -23,6 +44,16 @@
         <li role="presentation"><a href="/friendsList">好友列表</a></li>
         <li role="presentation"><a href="#" >朋友圈</a></li>
         <li role="presentation" class="active"><a href="/moreFriends" >更多好友</a></li>
+        <li role="presentation" class="navbar-text navbar-right">
+            <c:choose>
+                <c:when test="${empty requestScope.avatar }">
+                    <img style="width: 50px;height: 50px;" src="<%=basePath%>/imgs/favicon.jpg" alt="">
+                </c:when>
+                <c:otherwise>
+                    <img style="width: 50px;height: 50px;" src="<%=basePath%>/upload/${avatar}" alt="">
+                </c:otherwise>
+            </c:choose>
+        </li>
         <li role="presentation" class="navbar-text navbar-right">
             <c:choose>
                 <c:when test="${empty sessionScope.user }">
@@ -38,39 +69,38 @@
             <p style="color:red;font-weight:bolder; text-align: center;">${info}</p>
         </c:if>
 
-        <table  style="margin:100px;border:1px solid black;" border="1" cellpadding="0" cellspacing="0">
-            <tr>
-                <td>用户id</td>
-                <td>用户名称</td>
-                <td>用户密码</td>
-                <td>用户昵称</td>
-                <td>操作</td>
-            </tr>
-
+        <ul class="users">
             <c:if test="${not empty userList}">
                 <c:forEach items="${userList}" var="user">
-                    <tr>
-                        <td>${user.id }</td>
-                        <td>${user.username }</td>
-                        <td>${user.password }</td>
-                        <td>${user.nickname }</td>
-                        <td>
-                            <%--<form action="/addFriend"class="registSubmit">--%>
-                                <%--<input name="id" value="${user.id}">--%>
-                                <%--<input type="submit" >添加</input>--%>
-                            <%--</form>--%>
+                    <li class="user">
+                        <c:choose>
+                            <c:when test="${empty user.avatar }">
+                                <img class="avatar"  src="<%=basePath%>/imgs/favicon.jpg" alt="">
+                            </c:when>
+                            <c:otherwise>
+                                <img class="avatar" src="<%=basePath%>/upload/${user.avatar}" alt="">
+                            </c:otherwise>
+                        </c:choose>
+                        <span style="display: none;">${user.id }</span>
+                        <span style="display: none;">${user.username }</span>
+                        <span style="display: none;">${user.password }</span>
+                        <span>${user.nickname }</span>
+                        <span>${user.motto}</span>
+                        <spna>
                             <c:choose>
                                 <c:when test="${user.username == sessionScope.user}">
                                     <a href="/index"></a>
                                 </c:when>
                                 <c:otherwise><a href="/addFriend?id=${user.id}">添加</a></c:otherwise>
                             </c:choose>
-
-                        </td>
-                    </tr>
+                        </spna>
+                    </li>
                 </c:forEach>
             </c:if>
-        </table>
+        </ul>
+
+
+
 
     </div>
 </div>
