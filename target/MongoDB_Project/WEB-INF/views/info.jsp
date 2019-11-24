@@ -4,15 +4,14 @@
 <%
     String path = request.getContextPath();
     String basePath = request.getScheme()+"://"+request.getServerName()+":"+request.getServerPort()+path+"/";
-    String url = request.getRequestURI();
 %>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>个人中心</title>
+    <title>动态</title>
     <script src="<%=basePath%>/js/jquery-3.3.1.min.js"></script>
     <link href="<%=basePath%>/bootstrap-3.3.7-dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="<%=basePath%>/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
@@ -20,30 +19,12 @@
         .tab-content{
             margin-top: 30px;
         }
-        .avatar{
-            position: relative;
-            width: 30%;
-            height: auto;
-            float: left;
+        #myinfo{
+            display: inline-block;
+            width: 100%;
         }
         #localImag{
-            position: absolute;
-            top: 0;
-            left: 120px;
-        }
-        .updateAvatar{
-            margin-top:20px;
-        }
-        .info{
-            float: left;
-            width: 70%;
-        }
-        .info_ul{
-            list-style: none;
-            border-left: 2px solid #28a4c9;
-        }
-        .info_ul li{
-            height: 50px;
+
         }
         #infos{
             display: inline-block;
@@ -64,18 +45,17 @@
         .infoContent{
             float: left;
             width: 380px;
-            min-height: 200px;
-            border: 1px solid #31b0d5;
+            min-height: 150px;
+            border-bottom: 1px solid #31b0d5;
         }
-        
     </style>
 </head>
 <body>
     <div class="container">
         <ul class="nav nav-tabs">
-            <li role="presentation" class="active"><a href="/index" >个人中心</a></li>
+            <li role="presentation" ><a href="/index" >个人中心</a></li>
             <li role="presentation"><a href="/friendsList">好友列表</a></li>
-            <li role="presentation"><a href="/info" >朋友圈</a></li>
+            <li role="presentation" class="active"><a href="#" >朋友圈</a></li>
             <li role="presentation" ><a href="/moreFriends" >更多好友</a></li>
             <li role="presentation" class="navbar-text navbar-right">
                 <c:choose>
@@ -98,76 +78,75 @@
             </li>
         </ul>
         <div id="container" class="tab-content">
-            <div class="avatar">
-                <c:choose>
-                    <c:when test="${empty requestScope.avatar }">
-                        <img style="width: 100px;height: 100px;" src="<%=basePath%>/imgs/favicon.jpg" alt="">
-                    </c:when>
-                    <c:otherwise>
-                        <img style="width: 100px;height: 100px;" src="<%=basePath%>/upload/${avatar}" alt="">
-                    </c:otherwise>
-                </c:choose>
+            <a  href="#">发布动态</a>
+            <div id="myinfo">
+                <form action="/sendInfo" method="post" enctype="multipart/form-data">
+                    <input type="text" placeholder="这一刻的想法。。。" name="text">
+                    <input type='button' value="上传图片"  OnClick='javascript:$("#doc").click();'/>
+                    <input type="file" name="muavatar"  id="doc" onchange="showImage();" style="display: none;" />
+
+                    <input type="submit" value="发送"/>
+                </form>
                 <div id="localImag">
                     <img id="preview" width=-1 height=-1 style="diplay:none" />
                 </div>
-                <form class="updateAvatar" action="saveAvatar" method="post" enctype="multipart/form-data">
-                    <input type='button' value="上传头像"  OnClick='javascript:$("#doc").click();'/>
+            </div>
 
-                    <input type="file" name="muavatar"  id="doc" onchange="showImage();" style="display: none;" />
-                    <input type="submit" id="submit" value="修改头像"style="display: none;"/>
-                </form>
-            </div>
-            <div class="info">
-                <ul class="info_ul">
-                    <li>您的ID:  <span>${myInfo.id }</span></li>
-                    <li>用户名:  <span>${myInfo.username }</span></li>
-                    <li>昵称:  <span>${myInfo.nickname }</span></li>
-                    <li>
-                        座右铭：
-                        <span>
-                            <form action="/updateMotto" method="post">
-                                 <input type="text" value="${myInfo.motto}" name="motto">
-                                <button type="submit">修改座右铭</button>
-                            </form>
-                        </span>
-                    </li>
-                </ul>
-            </div>
+
+            <ul id="infos">
+                <c:if test="${not empty userInfos}">
+                    <c:forEach items="${userInfos}" var="userinfo" varStatus="idxStatus">
+                        <li>
+                            <div class="infoAvatar">
+                                <img style="width: 50px;height: 50px;" src="<%=basePath%>/upload/${userinfo.avatar}" alt="">
+                                <span style="height: 50px;line-height: 50px;margin-left: 10px;">${userinfo.nickname}</span>
+                            </div>
+                            <div class="infoContent">
+                                <p>${userinfo.info.text }</p>
+                                <p>
+                                    <img style="width: 80px;height: 80px;" src="<%=basePath%>/upload/${userinfo.info.images[0]}" alt="">
+                                </p>
+                                <p>
+                                        ${userinfo.info.createDate}
+                                        <a href="/getlike?userId=${userinfo._id}&infoId=${userinfo.info._id}">点赞</a>
+                                </p>
+                                <P style="margin-top: 20px; width: 100%; display: inline-block;">
+                                    <c:if test="${not empty userinfo.info.like}">
+                                        <c:forEach items="${userinfo.info.like}" var="like" varStatus="idxStatus">
+                                            <img src="<%=basePath%>/upload/${like.userAvatar}" style="width: 30px;height: 30px; float:left;" alt="">
+                                        </c:forEach>
+                                    </c:if>
+                                </P>
+
+                                <form action="sendComment?userId=${userinfo._id}&infoId=${userinfo.info._id}" method="post">
+                                    <input type="text" name="text">
+                                    <input type="submit" value="发送">
+                                </form>
+
+                                <div class="comment">
+                                    <c:if test="${not empty userinfo.info.comment}">
+                                        <c:forEach items="${userinfo.info.comment}" var="comment" varStatus="idxStatus">
+                                            <p>
+                                                <span style="color: #2e6da4;font-size: 18px;margin-right: 10px;">${comment.nickname}:</span>
+                                                ${comment.content}
+                                            </p>
+
+                                        </c:forEach>
+                                    </c:if>
+                                </div>
+
+                            </div>
+
+                        </li>
+                    </c:forEach>
+                </c:if>
+            </ul>
+
         </div>
-
-        <ul id="infos">
-            <c:if test="${not empty myInfo.infos}">
-                <c:forEach items="${myInfo.infos}" var="info">
-                    <li>
-                        <div class="infoAvatar">
-                            <c:choose>
-                                <c:when test="${empty requestScope.avatar }">
-                                    <img style="width: 50px;height: 50px;display: block;" src="<%=basePath%>/imgs/favicon.jpg" alt="">
-                                </c:when>
-                                <c:otherwise>
-                                    <img style="width: 50px;height: 50px;display: block;" src="<%=basePath%>/upload/${avatar}" alt="">
-                                </c:otherwise>
-                            </c:choose>
-                        </div>
-                        <div class="infoContent">
-                            <p>${info.text }</p>
-                            <p>
-                                <img style="width: 80px;height: 80px;" src="<%=basePath%>/upload/${info.images[0]}" alt="">
-                            </p>
-                        </div>
-                        
-                       
-
-                    </li>
-                </c:forEach>
-            </c:if>
-        </ul>
     </div>
 
     <script type="text/javascript">
         function showImage() {
-            var submit = document.getElementById("submit");
-            submit.style.display="inline-block";
             var docObj = document.getElementById("doc");
             var imgObjPreview = document.getElementById("preview");
             if (docObj.files && docObj.files[0]) {
@@ -201,5 +180,6 @@
             return true;
         }
     </script>
+
 </body>
 </html>

@@ -1,12 +1,8 @@
 package com.mongodb;
 
-import com.mongodb.client.FindIterable;
-import com.mongodb.entity.User;
-import com.mongodb.gridfs.GridFS;
-import com.mongodb.gridfs.GridFSInputFile;
+import com.mongodb.entity.*;
 import com.mongodb.util.CookieUtils;
-import com.sun.org.apache.xml.internal.resolver.helpers.FileURL;
-import org.bson.Document;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -23,7 +19,6 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import javax.swing.plaf.synth.SynthOptionPaneUI;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -69,6 +64,7 @@ public class UserController {
         user.setPassword(CookieUtils.md5Encrypt(password));
         user.setUsername(username);
         user.setMotto("该用户比较懒哦~");
+        user.setAvatar("favicon.jpg");
         mongoTemplate.save(user);
         return "/login";
     }
@@ -183,6 +179,8 @@ public class UserController {
         String username = (String) request.getSession().getAttribute("user");
         if(username != null){
             myFriends(request,response);
+            User user = getMine(request,response);
+            request.setAttribute("avatar",user.getAvatar());
             return "/friendsList";
         }else{
             request.setAttribute("errorMsg", "请先登录！");
@@ -280,8 +278,17 @@ public class UserController {
     // 所有用户
     @RequestMapping(value = {"moreFriends"})
     public String moreFriends(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        moreUser(request,response);
-        return "/moreFriends";
+        String username = (String) request.getSession().getAttribute("user");
+        if(username != null){
+            User user = getMine(request,response);
+            request.setAttribute("avatar",user.getAvatar());
+            moreUser(request,response);
+            return "/moreFriends";
+        }else{
+            request.setAttribute("errorMsg", "请先登录！");
+            return "/login";
+        }
+
     }
 
 //    @RequestMapping(value = {"moreUser"})
@@ -348,7 +355,7 @@ public class UserController {
 
     // 修改座右铭
     @RequestMapping(value = {"updateMotto"})
-    private void updateMotto(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    public void updateMotto(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String motto = request.getParameter("motto");
         System.out.println(motto);
         String username = (String) request.getSession().getAttribute("user");
@@ -357,4 +364,143 @@ public class UserController {
         mongoTemplate.upsert(query, update, User.class);
         request.getRequestDispatcher("/index").forward(request, response);
     }
+
+    //朋友圈动态
+    @RequestMapping(value = {"info"})
+    public String getInfo(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String username = (String) request.getSession().getAttribute("user");
+        if(username != null){
+            User user = getMine(request,response);
+            request.setAttribute("avatar",user.getAvatar());
+            getAllInfo(request, response);
+            return "/info";
+        }else{
+            request.setAttribute("errorMsg", "请先登录！");
+            return "/login";
+        }
+
+    }
+
+    // 发布动态
+    @RequestMapping(value = {"sendInfo"})
+    public void sendInfo(@RequestParam("muavatar") MultipartFile[] files,
+                         @RequestParam("text") String text,
+                         HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+
+        String username = (String) request.getSession().getAttribute("user");
+        Query query = new Query(Criteria.where("username").is(username));
+
+        List<String> like = new ArrayList<String>();
+        List<Comment> comments = new ArrayList<Comment>();
+
+        List<String> list = new ArrayList<String>();
+        Info info = new Info();
+        if (files != null && files.length > 0) {
+            for (int i = 0; i < files.length; i++) {
+                MultipartFile file = files[i];
+                // 保存文件
+                list = saveFile(request, file, list);
+
+                info = new Info(text,list);
+            }
+        }else{
+            info = new Info(text);
+        }
+
+
+        Update update = new Update();
+        update.addToSet("infos",info);
+        mongoTemplate.upsert(query, update, "user");
+
+        request.getRequestDispatcher("/info").forward(request, response);
+    }
+
+
+    // 显示朋友圈动态
+    public void getAllInfo(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException{
+        User user = getMine(request,response);
+
+        List<String> ids = user.getFriends();
+        System.out.println("我的好友id列表：");
+        System.out.println(ids);
+
+        List<UserInfo> userInfos = new ArrayList<UserInfo>();
+        if(ids != null){
+            for(String id : ids){
+                Query query1 = new Query(Criteria.where("_id").is(id));
+                User user1 = mongoTemplate.findOne(query1,User.class);
+                if(user1.getInfos() !=null){
+                    for(Info i : user1.getInfos()){
+                        UserInfo userInfo = new UserInfo(user1.getId(),user1.getNickname(),user1.getAvatar(),i);
+                        userInfos.add(userInfo);
+                    }
+                }
+
+            }
+        }
+        System.out.println("好友列表：");
+        request.setAttribute("userInfos",userInfos);
+        System.out.println(request.getAttribute("userInfos"));
+//        request.getRequestDispatcher("/friendsList").forward(request, response);
+    }
+
+    // 点赞
+    // 添加好友
+    @RequestMapping(value = {"getlike"})
+    public void getlike(@RequestParam("userId") ObjectId userId,@RequestParam("infoId") ObjectId infoId, HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        User user = getMine(request,response);
+        String userid = String.valueOf(user.getId());
+
+        Userlike userlike = new Userlike();
+        userlike.setUserId(userid);
+        userlike.setUserAvatar(user.getAvatar());
+
+
+        Query query = Query.query(Criteria.where("_id").is(userId).and("infos._id").is(infoId));
+//        Update update = new Update().addToSet("infos.$.like",user.getAvatar()).addToSet("infos.$.likeId",user.getId());
+        Update update = new Update().addToSet("infos.$.like",userlike);
+
+        mongoTemplate.upsert(query, update, User.class);
+
+        System.out.println("点赞。。。");
+        request.getRequestDispatcher("/info").forward(request, response);
+
+    }
+
+    // 发布评论
+    @RequestMapping(value = {"sendComment"})
+    public void sendComment(@RequestParam("userId") ObjectId userId,@RequestParam("infoId") ObjectId infoId,@RequestParam("text") String text, HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        User user = getMine(request,response);
+        String userid = String.valueOf(user.getId());
+
+        Comment comment = new Comment();
+        comment.setUserId(userid);
+        comment.setContent(text);
+        comment.setNickname(user.getNickname());
+
+        Query query = Query.query(Criteria.where("_id").is(userId).and("infos._id").is(infoId));
+        Update update = new Update().addToSet("infos.$.comment",comment);
+        mongoTemplate.upsert(query, update, User.class);
+
+        System.out.println("评论。。。");
+        request.getRequestDispatcher("/info").forward(request, response);
+
+    }
+
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

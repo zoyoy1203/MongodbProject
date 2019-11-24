@@ -1,21 +1,26 @@
 package com.mongodb.entity;
 
+import org.bson.types.ObjectId;
+
 import java.util.List;
 
+// 用户信息模板
 public class User {
-    private String id;
+    private ObjectId id;
     private String username;
     private String password;
     private String nickname;
     private List<String> friends;
     private String avatar;  // 头像地址
     private String motto;  // 座右铭
+    private List<Info> infos; // 动态
 
-    public String getId() {
+
+    public ObjectId getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(ObjectId id) {
         this.id = id;
     }
 
@@ -67,16 +72,25 @@ public class User {
         this.motto = motto;
     }
 
+    public List<Info> getInfos() {
+        return infos;
+    }
+
+    public void setInfos(List<Info> infos) {
+        this.infos = infos;
+    }
+
     @Override
     public String toString() {
         return "User{" +
-                "id='" + id + '\'' +
+                "id=" + id +
                 ", username='" + username + '\'' +
                 ", password='" + password + '\'' +
                 ", nickname='" + nickname + '\'' +
                 ", friends=" + friends +
                 ", avatar='" + avatar + '\'' +
                 ", motto='" + motto + '\'' +
+                ", infos=" + infos +
                 '}';
     }
 }

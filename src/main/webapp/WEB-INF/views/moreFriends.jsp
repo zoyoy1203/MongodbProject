@@ -42,7 +42,7 @@
     <ul class="nav nav-tabs">
         <li role="presentation" ><a href="/index" >个人中心</a></li>
         <li role="presentation"><a href="/friendsList">好友列表</a></li>
-        <li role="presentation"><a href="#" >朋友圈</a></li>
+        <li role="presentation"><a href="/info" >朋友圈</a></li>
         <li role="presentation" class="active"><a href="/moreFriends" >更多好友</a></li>
         <li role="presentation" class="navbar-text navbar-right">
             <c:choose>

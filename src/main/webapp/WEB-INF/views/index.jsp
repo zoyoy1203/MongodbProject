@@ -36,7 +36,7 @@
         }
         .info{
             float: left;
-            width: auto;
+            width: 70%;
         }
         .info_ul{
             list-style: none;
@@ -45,6 +45,29 @@
         .info_ul li{
             height: 50px;
         }
+        #infos{
+            display: inline-block;
+            width: 100%;
+            height: auto;
+            margin-left: 30%;
+        }
+        #infos li{
+            display: inline-block;
+            margin-top: 40px;
+            width: 100%;
+
+        }
+        .infoAvatar{
+            width: 120px;
+            float: left;
+        }
+        .infoContent{
+            float: left;
+            width: 380px;
+            min-height: 200px;
+            border: 1px solid #31b0d5;
+        }
+        
     </style>
 </head>
 <body>
@@ -52,7 +75,7 @@
         <ul class="nav nav-tabs">
             <li role="presentation" class="active"><a href="/index" >个人中心</a></li>
             <li role="presentation"><a href="/friendsList">好友列表</a></li>
-            <li role="presentation"><a href="#" >朋友圈</a></li>
+            <li role="presentation"><a href="/info" >朋友圈</a></li>
             <li role="presentation" ><a href="/moreFriends" >更多好友</a></li>
             <li role="presentation" class="navbar-text navbar-right">
                 <c:choose>
@@ -91,7 +114,7 @@
                     <input type='button' value="上传头像"  OnClick='javascript:$("#doc").click();'/>
 
                     <input type="file" name="muavatar"  id="doc" onchange="showImage();" style="display: none;" />
-                    <input type="submit" value="修改头像"/>
+                    <input type="submit" id="submit" value="修改头像"style="display: none;"/>
                 </form>
             </div>
             <div class="info">
@@ -111,10 +134,40 @@
                 </ul>
             </div>
         </div>
+
+        <ul id="infos">
+            <c:if test="${not empty myInfo.infos}">
+                <c:forEach items="${myInfo.infos}" var="info">
+                    <li>
+                        <div class="infoAvatar">
+                            <c:choose>
+                                <c:when test="${empty requestScope.avatar }">
+                                    <img style="width: 50px;height: 50px;display: block;" src="<%=basePath%>/imgs/favicon.jpg" alt="">
+                                </c:when>
+                                <c:otherwise>
+                                    <img style="width: 50px;height: 50px;display: block;" src="<%=basePath%>/upload/${avatar}" alt="">
+                                </c:otherwise>
+                            </c:choose>
+                        </div>
+                        <div class="infoContent">
+                            <p>${info.text }</p>
+                            <p>
+                                <img style="width: 80px;height: 80px;" src="<%=basePath%>/upload/${info.images[0]}" alt="">
+                            </p>
+                        </div>
+                        
+                       
+
+                    </li>
+                </c:forEach>
+            </c:if>
+        </ul>
     </div>
 
     <script type="text/javascript">
         function showImage() {
+            var submit = document.getElementById("submit");
+            submit.style.display="inline-block";
             var docObj = document.getElementById("doc");
             var imgObjPreview = document.getElementById("preview");
             if (docObj.files && docObj.files[0]) {
