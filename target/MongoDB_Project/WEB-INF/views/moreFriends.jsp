@@ -18,6 +18,7 @@
     <style>
         .users{
             list-style: none;
+            height: 450px;
         }
         .user{
             display: inline-block;
@@ -35,6 +36,35 @@
             min-width: 100px;
             margin-left: 30px;
         }
+        .pagination ul{
+            /*list-style: noen;*/
+        }
+        .pagination ul li{
+            float: left;
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            border: 1px solid #5bc0de;
+            text-align: center;
+            margin: 0 3px;
+            list-style: none;
+        }
+        .pagination ul li a{
+            display: inline-block;
+            width: 100%;
+            height: 100%;
+        }
+        .pagination ul li a:hover,
+        .pagination ul li a:active{
+
+            background: #46b8da;
+            color: #fff;
+        }
+        .pagination ul li a strong{
+            display: inline-block;
+            width: 100%;
+            height: 100%;
+        }
     </style>
 </head>
 <body>
@@ -43,7 +73,7 @@
         <li role="presentation" ><a href="/index" >个人中心</a></li>
         <li role="presentation"><a href="/friendsList">好友列表</a></li>
         <li role="presentation"><a href="/info" >朋友圈</a></li>
-        <li role="presentation" class="active"><a href="/moreFriends" >更多好友</a></li>
+        <li role="presentation" class="active"><a href="/moreFriends?pageIndex=1&pageSize=5" >更多好友</a></li>
         <li role="presentation" class="navbar-text navbar-right">
             <c:choose>
                 <c:when test="${empty requestScope.avatar }">
@@ -99,7 +129,25 @@
             </c:if>
         </ul>
 
+        <div class="pagination">
+            <ul>
+                <c:if test="${not empty pageNum}">
+                    <c:forEach var="page" begin="1" end="${pageNum}">
+                        <li>
+                            <a href="/moreFriends?pageIndex=${page}&pageSize=5">
+                                <c:choose>
+                                    <c:when test="${pageIndex == page}">
+                                        <strong style="background: #46b8da;color: #fff;">  ${page}</strong>
+                                    </c:when>
+                                    <c:otherwise><strong>${page}</strong></c:otherwise>
+                                </c:choose>
 
+                            </a>
+                        </li>
+                    </c:forEach>
+                </c:if>
+            </ul>
+        </div>
 
 
     </div>

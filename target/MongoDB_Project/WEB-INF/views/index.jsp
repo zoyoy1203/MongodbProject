@@ -65,7 +65,7 @@
             float: left;
             width: 380px;
             min-height: 200px;
-            border: 1px solid #31b0d5;
+            border-bottom: 2px solid #31b0d5;
         }
         
     </style>
@@ -76,7 +76,7 @@
             <li role="presentation" class="active"><a href="/index" >个人中心</a></li>
             <li role="presentation"><a href="/friendsList">好友列表</a></li>
             <li role="presentation"><a href="/info" >朋友圈</a></li>
-            <li role="presentation" ><a href="/moreFriends" >更多好友</a></li>
+            <li role="presentation" ><a href="/moreFriends?pageIndex=1&pageSize=5" >更多好友</a></li>
             <li role="presentation" class="navbar-text navbar-right">
                 <c:choose>
                     <c:when test="${empty requestScope.avatar }">
@@ -155,8 +155,6 @@
                                 <img style="width: 80px;height: 80px;" src="<%=basePath%>/upload/${info.images[0]}" alt="">
                             </p>
                         </div>
-                        
-                       
 
                     </li>
                 </c:forEach>

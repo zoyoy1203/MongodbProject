@@ -56,7 +56,7 @@
             <li role="presentation" ><a href="/index" >个人中心</a></li>
             <li role="presentation"><a href="/friendsList">好友列表</a></li>
             <li role="presentation" class="active"><a href="#" >朋友圈</a></li>
-            <li role="presentation" ><a href="/moreFriends" >更多好友</a></li>
+            <li role="presentation" ><a href="/moreFriends?pageIndex=1&pageSize=5" >更多好友</a></li>
             <li role="presentation" class="navbar-text navbar-right">
                 <c:choose>
                     <c:when test="${empty requestScope.avatar }">
@@ -83,7 +83,7 @@
                 <form action="/sendInfo" method="post" enctype="multipart/form-data">
                     <input type="text" placeholder="这一刻的想法。。。" name="text">
                     <input type='button' value="上传图片"  OnClick='javascript:$("#doc").click();'/>
-                    <input type="file" name="muavatar"  id="doc" onchange="showImage();" style="display: none;" />
+                    <input type="file" name="muavatar" multiple  id="doc" onchange="showImage();" style="display: none;" />
 
                     <input type="submit" value="发送"/>
                 </form>

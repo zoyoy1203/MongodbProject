@@ -3,7 +3,9 @@ package com.mongodb;
 import com.mongodb.entity.*;
 import com.mongodb.util.CookieUtils;
 import org.bson.types.ObjectId;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -28,6 +30,22 @@ import java.util.List;
 public class UserController {
     @Autowired
     MongoTemplate mongoTemplate;
+
+    @RequestMapping(value = {"insertTest"})
+    public void iTest() throws IllegalArgumentException, IllegalAccessException {
+        for(int i=0;i<1000;i++){
+            User user = new User();
+            user.setNickname("测试"+i);
+            user.setPassword(CookieUtils.md5Encrypt(String.valueOf(123)));
+            user.setUsername("测试"+i);
+            user.setMotto("该用户比较懒哦~");
+            user.setAvatar("favicon.jpg");
+            System.out.println(user);
+            mongoTemplate.save(user);
+        }
+
+    }
+
 
     private User getMine(HttpServletRequest request, HttpServletResponse response){
         String username = (String) request.getSession().getAttribute("user");
@@ -141,7 +159,7 @@ public class UserController {
             }
 
         }else {
-            moreUser(request,response);
+//            moreUser(request,response);
             request.getSession().setAttribute("user",username);
             User user = getMine(request,response);
             response.sendRedirect("/index");
@@ -255,7 +273,7 @@ public class UserController {
             mongoTemplate.updateFirst(query, update, User.class);
         }
 
-        request.getRequestDispatcher("/moreFriends").forward(request, response);
+        request.getRequestDispatcher("/moreFriends?pageIndex=1&pageSize=5").forward(request, response);
 
     }
     // 删除好友
@@ -279,10 +297,14 @@ public class UserController {
     @RequestMapping(value = {"moreFriends"})
     public String moreFriends(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String username = (String) request.getSession().getAttribute("user");
+        int pageIndex = Integer.parseInt(request.getParameter("pageIndex"));
+        int pageSize = Integer.parseInt(request.getParameter("pageSize"));
+        request.setAttribute("pageIndex",pageIndex);
+
         if(username != null){
             User user = getMine(request,response);
             request.setAttribute("avatar",user.getAvatar());
-            moreUser(request,response);
+            moreUser(request,response,pageIndex,pageSize);
             return "/moreFriends";
         }else{
             request.setAttribute("errorMsg", "请先登录！");
@@ -292,10 +314,29 @@ public class UserController {
     }
 
 //    @RequestMapping(value = {"moreUser"})
-    public void moreUser(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    public void moreUser(HttpServletRequest request, HttpServletResponse response,int pageIndex, int pageSize) throws ServletException, IOException {
         List<User> list = new ArrayList<User>();
-        list = mongoTemplate.findAll(User.class);
+//        list = mongoTemplate.findAll(User.class);
+
+        Query query = new Query();
+        query.skip((pageIndex-1)*pageSize);
+        query.limit(pageSize);
+        list = mongoTemplate.find(query,User.class);
+        //查询总记录数
+        int count = (int) mongoTemplate.count(query,User.class);
+        float page = (float)count/pageSize;
+        System.out.println(page);
+        int pageNum = (int)Math.ceil(page);
+
+        System.out.println("分页后得到的数据：");
+        System.out.println(list);
+        System.out.println("总记录数：");
+        System.out.println(count);
+        System.out.println("总页数：");
+        System.out.println(pageNum);
+
         request.setAttribute("userList",list);
+        request.setAttribute("pageNum",pageNum);
 //        response.sendRedirect("/index");
     }
 
@@ -445,7 +486,6 @@ public class UserController {
     }
 
     // 点赞
-    // 添加好友
     @RequestMapping(value = {"getlike"})
     public void getlike(@RequestParam("userId") ObjectId userId,@RequestParam("infoId") ObjectId infoId, HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         User user = getMine(request,response);

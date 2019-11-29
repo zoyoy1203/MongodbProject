@@ -43,7 +43,7 @@
         <li role="presentation"><a href="/index" >个人中心</a></li>
         <li role="presentation" class="active"><a href="">好友列表</a></li>
         <li role="presentation"><a href="/info" >朋友圈</a></li>
-        <li role="presentation"><a href="/moreFriends" >更多好友</a></li>
+        <li role="presentation"><a href="/moreFriends?pageIndex=1&pageSize=5" >更多好友</a></li>
         <li role="presentation" class="navbar-text navbar-right">
             <c:choose>
                 <c:when test="${empty requestScope.avatar }">
